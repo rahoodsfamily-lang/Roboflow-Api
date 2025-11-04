@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Keys - Fire & Smoke Detection API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-content h1 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        
+        .header-content p {
+            color: #666;
+        }
+        
+        .user-info {
+            text-align: right;
+        }
+        
+        .username {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .logout-btn {
+            padding: 8px 16px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .logout-btn:hover {
+            background: #cc0000;
+        }
+        
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .key-list {
+            margin-top: 20px;
+        }
+        
+        .key-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .key-info {
+            flex: 1;
+        }
+        
+        .key-prefix {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .key-meta {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .new-key-box {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .new-key-box strong {
+            display: block;
+            color: #155724;
+            margin-bottom: 10px;
+        }
+        
+        .new-key {
+            background: white;
+            padding: 12px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            color: #333;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 10px;
+            color: #856404;
+            font-size: 13px;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .links {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: 500;
+        }
+        
+        .links a:hover {
+            text-decoration: underline;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>🔑 API Keys</h1>
+                <p>Manage your API keys for fire & smoke detection</p>
+            </div>
+            <div class="user-info">
+                <div class="username" id="username">Loading...</div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Generate New API Key</h2>
+            <p style="color: #666; margin-bottom: 15px;">Create a new API key for your applications</p>
+            
+            <div id="message" class="message"></div>
+            
+            <button class="btn" id="generateBtn" onclick="generateKey()">Generate New Key</button>
+            
+            <div id="newKeyBox" class="new-key-box">
+                <strong>🎉 New API Key Generated!</strong>
+                <div class="new-key" id="newKey"></div>
+                <div class="warning">
+                    ⚠️ Save this key now! You won't be able to see it again.
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Your API Keys</h2>
+            <div id="keyList" class="key-list">
+                <div style="text-align: center; padding: 20px; color: #666;">
+                    Loading...
+                </div>
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="/dashboard">📊 Dashboard</a>
+            <a href="/webhooks">🔔 Webhooks</a>
+            <a href="/">🏠 Home</a>
+        </div>
+    </div>
+    
+    <script>
+        // Check if user is logged in
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!user.id) {
+            window.location.href = '/login';
+        }
+        
+        document.getElementById('username').textContent = user.username || 'User';
+        
+        // Load API keys
+        async function loadKeys() {
+            const keyList = document.getElementById('keyList');
+            
+            try {
+                const response = await fetch('/api/v1/keys');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    if (data.keys.length === 0) {
+                        keyList.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🔑</div>
+                                <p>No API keys yet</p>
+                                <p style="font-size: 14px; margin-top: 10px;">Generate your first API key above</p>
+                            </div>
+                        `;
+                    } else {
+                        keyList.innerHTML = data.keys.map(key => `
+                            <div class="key-item">
+                                <div class="key-info">
+                                    <div class="key-prefix">${key.key_prefix}...</div>
+                                    <div class="key-meta">
+                                        ${key.name || 'Unnamed Key'} • Created: ${new Date(key.created_at).toLocaleDateString()}
+                                        ${key.last_used ? ` • Last used: ${new Date(key.last_used).toLocaleDateString()}` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    keyList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">❌</div>
+                            <p>${data.error || 'Failed to load API keys'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                keyList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <p>Error loading API keys</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function generateKey() {
+            const btn = document.getElementById('generateBtn');
+            const messageDiv = document.getElementById('message');
+            const newKeyBox = document.getElementById('newKeyBox');
+            const newKeyDiv = document.getElementById('newKey');
+            
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            messageDiv.style.display = 'none';
+            newKeyBox.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/v1/keys', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: 'API Key ' + new Date().toLocaleString()
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Show the new API key
+                    newKeyDiv.textContent = data.api_key;
+                    newKeyBox.style.display = 'block';
+                    
+                    // Reload the key list
+                    loadKeys();
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = '❌ ' + (data.error || 'Failed to generate key');
+                    messageDiv.style.display = 'block';
+                }
+                
+                btn.disabled = false;
+                btn.textContent = 'Generate New Key';
+            } catch (error) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = '❌ Error generating key';
+                messageDiv.style.display = 'block';
+                
+                btn.disabled = false;
+                btn.textContent = 'Generate New Key';
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('user');
+            fetch('/api/v1/auth/logout', { method: 'POST' })
+                .then(() => {
+                    window.location.href = '/login';
+                });
+        }
+        
+        // Load keys on page load
+        loadKeys();
+    </script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection Dashboard - Fire & Smoke Detection API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .content-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .history-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .history-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .history-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .badge-fire {
+            background: #ff4444;
+            color: white;
+        }
+
+        .badge-smoke {
+            background: #888;
+            color: white;
+        }
+
+        .badge-none {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .chart-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .api-key-section {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ffc107;
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin: 10px 0;
+        }
+
+        .error-message {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .success-message {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Detection Dashboard</h1>
+            <p>Real-time fire and smoke detection analytics</p>
+        </div>
+
+        <div class="api-key-section">
+            <h3>🔑 API Key Required</h3>
+            <p>Enter your API key to view your detection history and analytics:</p>
+            <input type="password" id="apiKeyInput" class="api-key-input" placeholder="Enter your API key (fsd_...)">
+            <button class="btn btn-primary" onclick="loadDashboard()">Load Dashboard</button>
+        </div>
+
+        <div id="dashboardContent" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value" id="totalDetections">0</div>
+                    <div class="stat-label">Total Detections</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-value" id="fireDetections">0</div>
+                    <div class="stat-label">Fire Detected</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">💨</div>
+                    <div class="stat-value" id="smokeDetections">0</div>
+                    <div class="stat-label">Smoke Detected</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-value" id="avgConfidence">0%</div>
+                    <div class="stat-label">Avg Confidence</div>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <h2 class="section-title">📈 Analytics (Last 30 Days)</h2>
+                <div class="chart-container">
+                    <canvas id="detectionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <h2 class="section-title">📜 Detection History</h2>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Location</th>
+                            <th>Detection</th>
+                            <th>Confidence</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr>
+                            <td colspan="5" class="loading">
+                                <div class="spinner"></div>
+                                Loading history...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="errorMessage" style="display: none;" class="error-message"></div>
+    </div>
+
+    <script>
+        let apiKey = '';
+
+        function loadDashboard() {
+            apiKey = document.getElementById('apiKeyInput').value.trim();
+            
+            if (!apiKey) {
+                showError('Please enter your API key');
+                return;
+            }
+
+            // Hide API key section, show dashboard
+            document.querySelector('.api-key-section').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+
+            // Load data
+            loadAnalytics();
+            loadHistory();
+        }
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch('/api/v1/analytics?days=30', {
+                    headers: {
+                        'X-API-Key': apiKey
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load analytics');
+                }
+
+                const data = await response.json();
+                const stats = data.statistics;
+
+                // Update stats
+                document.getElementById('totalDetections').textContent = stats.total_detections || 0;
+                document.getElementById('fireDetections').textContent = stats.fire_detections || 0;
+                document.getElementById('smokeDetections').textContent = stats.smoke_detections || 0;
+                document.getElementById('avgConfidence').textContent = 
+                    stats.avg_confidence ? stats.avg_confidence.toFixed(1) + '%' : '0%';
+
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                showError('Failed to load analytics: ' + error.message);
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/v1/history?limit=50', {
+                    headers: {
+                        'X-API-Key': apiKey
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load history');
+                }
+
+                const data = await response.json();
+                const history = data.history;
+
+                const tbody = document.getElementById('historyTableBody');
+                tbody.innerHTML = '';
+
+                if (history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px;">No detection history yet. Start detecting!</td></tr>';
+                    return;
+                }
+
+                history.forEach(item => {
+                    const row = document.createElement('tr');
+                    
+                    const badge = item.has_fire ? 
+                        '<span class="badge badge-fire">🔥 Fire</span>' :
+                        item.has_smoke ?
+                        '<span class="badge badge-smoke">💨 Smoke</span>' :
+                        '<span class="badge badge-none">✓ Clear</span>';
+
+                    row.innerHTML = `
+                        <td>${new Date(item.timestamp).toLocaleString()}</td>
+                        <td>${item.location || 'Unknown'}</td>
+                        <td>${badge}</td>
+                        <td>${item.max_confidence ? item.max_confidence.toFixed(1) + '%' : 'N/A'}</td>
+                        <td>${item.detection_count}</td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error loading history:', error);
+                showError('Failed to load history: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (apiKey) {
+                loadAnalytics();
+                loadHistory();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

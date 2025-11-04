@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎥 Live Webcam Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .nav-links {
+            margin-top: 20px;
+        }
+
+        .nav-links a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: 600;
+        }
+
+        .nav-links a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .video-section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .controls-section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #videoContainer {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #webcam {
+            width: 100%;
+            display: block;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-stop {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background: #d32f2f;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .settings {
+            margin-bottom: 20px;
+        }
+
+        .settings label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .settings select, .settings input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+
+        .alert-box {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            animation: pulse 1s infinite;
+        }
+
+        .alert-box.fire {
+            background: #ffebee;
+            border: 3px solid #f44336;
+            color: #d32f2f;
+            display: block;
+        }
+
+        .alert-box.smoke {
+            background: #f5f5f5;
+            border: 3px solid #757575;
+            color: #424242;
+            display: block;
+        }
+
+        .alert-box.clear {
+            background: #e8f5e9;
+            border: 3px solid #4caf50;
+            color: #2e7d32;
+            display: block;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .stats h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .nav-links {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+            
+            .nav-links a {
+                display: inline-block;
+                margin: 5px 8px;
+                padding: 8px 12px;
+                background: #f0f0f0;
+                border-radius: 8px;
+                font-size: 0.9em;
+                min-width: 100px;
+                text-align: center;
+            }
+            
+            .nav-links a:hover {
+                background: #667eea;
+                color: white;
+            }
+            
+            .video-section, .stats-section {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .nav-links a {
+                margin: 4px 5px;
+                padding: 6px 10px;
+                font-size: 0.85em;
+                min-width: 90px;
+            }
+            
+            .video-section, .stats-section {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 Live Webcam Detection</h1>
+            <p>Real-time fire and smoke detection from your camera</p>
+            <div class="nav-links">
+                <a href="/">🏠 Home</a>
+                <a href="/detect">📸 Single Image</a>
+                <a href="/batch">📷 Batch</a>
+                <a href="/video">🎬 Video</a>
+                <a href="/webcam">🎥 Webcam</a>
+                <a href="/dashboard" style="display: none;">📊 Dashboard</a>
+                <a href="/webhooks" style="display: none;">🔔 Webhooks</a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="video-section">
+                <h2 style="margin-bottom: 20px;">📹 Live Feed</h2>
+                
+                <div id="alertBox" class="alert-box"></div>
+                
+                <div id="videoContainer">
+                    <video id="webcam" autoplay playsinline></video>
+                    <canvas id="canvas"></canvas>
+                </div>
+
+                <button id="startBtn" class="btn btn-start">▶️ Start Detection</button>
+                <button id="stopBtn" class="btn btn-stop" disabled>⏹️ Stop Detection</button>
+            </div>
+
+            <div class="controls-section">
+                <h2 style="margin-bottom: 20px;">⚙️ Settings</h2>
+                
+                <div class="settings">
+                    <label>Detection Interval:</label>
+                    <select id="interval">
+                        <option value="2000" selected>Every 2 seconds (Recommended - Stable)</option>
+                        <option value="1000">Every 1 second (May timeout)</option>
+                        <option value="500">Every 0.5 seconds (Unstable)</option>
+                    </select>
+                    <p style="font-size: 11px; color: #999; margin-top: 5px;">
+                        ⚠️ Roboflow API can be slow. Use 2 seconds for best stability.
+                    </p>
+
+                    <label>Confidence Threshold:</label>
+                    <select id="confidence">
+                        <option value="20">20% (Very Sensitive)</option>
+                        <option value="40" selected>40% (Balanced)</option>
+                        <option value="60">60% (Less Sensitive)</option>
+                    </select>
+                </div>
+
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #ddd;">
+                    <h3 style="margin-bottom: 15px;">🔔 Alert Notifications</h3>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">
+                            <input type="checkbox" id="emailEnabled" style="margin-right: 8px; width: auto; cursor: pointer;">
+                            📧 Email Alerts
+                        </label>
+                        <input type="email" id="emailAddress" placeholder="Enter your email" 
+                               style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">
+                            <input type="checkbox" id="smsEnabled" style="margin-right: 8px; width: auto; cursor: pointer;">
+                            📱 SMS Alerts 
+                        </label>
+                        <input type="tel" id="phoneNumber" placeholder="Enter phone number (+1234567890)" 
+                               style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px;">
+                        <p style="font-size: 11px; color: #999; margin-top: 5px;">
+                            Use international format (e.g., +639171234567 for Philippines)
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px; padding-top: 15px; border-top: 1px solid #eee;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">
+                            <input type="checkbox" id="pushEnabled" checked style="margin-right: 8px; width: auto; cursor: pointer;">
+                            🔔 Browser Push Notifications
+                        </label>
+                        <p style="font-size: 12px; color: #666; margin-top: 5px; margin-left: 24px;">
+                            Desktop notifications with sound (requires permission)
+                        </p>
+                    </div>
+                    
+                    <p style="font-size: 12px; color: #666; background: #f0f8ff; padding: 10px; border-radius: 5px;">
+                        ℹ️ Check the boxes and enter your contact info to receive alerts when fire or smoke is detected
+                    </p>
+                </div>
+
+                <div class="stats">
+                    <h3>📊 Statistics</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Status:</span>
+                        <span class="stat-value" id="status">Stopped</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Frames Analyzed:</span>
+                        <span class="stat-value" id="framesAnalyzed">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Fire Detected:</span>
+                        <span class="stat-value" id="fireCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Smoke Detected:</span>
+                        <span class="stat-value" id="smokeCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Last Detection:</span>
+                        <span class="stat-value" id="lastDetection">None</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const webcam = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const alertBox = document.getElementById('alertBox');
+
+        let stream = null;
+        let detectionInterval = null;
+        let stats = {
+            framesAnalyzed: 0,
+            fireCount: 0,
+            smokeCount: 0
+        };
+        
+        // Track alert state for persistent notifications
+        let alertActive = false;
+        let lastAlertType = null; // 'fire' or 'smoke'
+        
+        // Confirmation system for accuracy (require multiple consecutive detections)
+        let fireConfirmCount = 0;
+        let smokeConfirmCount = 0;
+        const CONFIRM_THRESHOLD = 2; // Require 2 consecutive detections before alerting (balanced speed/accuracy)
+
+
+
+        // Request notification permission on page load
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Function to show push notification (persistent/updating)
+        function showPushNotification(title, message, icon = '🔥', alertType = 'fire') {
+            // Check if push notifications are enabled
+            const pushEnabled = document.getElementById('pushEnabled')?.checked;
+            if (!pushEnabled) return;
+            
+            if ('Notification' in window && Notification.permission === 'granted') {
+                // Use fixed tag for persistent notification (replaces previous)
+                const notificationOptions = {
+                    body: message,
+                    icon: icon === '🔥' ? 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">🔥</text></svg>' : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">💨</text></svg>',
+                    badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">⚠️</text></svg>',
+                    requireInteraction: true,
+                    tag: 'fire-detection-alert', // Fixed tag - updates same notification
+                    silent: alertActive, // Only play sound on first alert
+                    renotify: true // Force update even with same tag
+                };
+                
+                // Only add vibrate if not silent (silent notifications can't vibrate)
+                if (!alertActive) {
+                    notificationOptions.vibrate = [200, 100, 200];
+                }
+                
+                const notification = new Notification(title, notificationOptions);
+
+                // Play alert sound only on first detection
+                if (!alertActive) {
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE');
+                    audio.play().catch(() => {});
+                }
+
+                return notification;
+            }
+        }
+
+        // Start webcam
+        startBtn.addEventListener('click', async () => {
+            // Request notification permission
+            if ('Notification' in window && Notification.permission === 'default') {
+                await Notification.requestPermission();
+            }
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 1280, height: 720 } 
+                });
+                webcam.srcObject = stream;
+                
+                // Wait for video to load
+                webcam.onloadedmetadata = () => {
+                    canvas.width = webcam.videoWidth;
+                    canvas.height = webcam.videoHeight;
+                    startDetection();
+                };
+
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                document.getElementById('status').textContent = 'Running';
+                document.getElementById('status').style.color = '#4caf50';
+            } catch (error) {
+                alert('Could not access webcam: ' + error.message);
+            }
+        });
+
+        // Stop webcam
+        stopBtn.addEventListener('click', () => {
+            stopDetection();
+        });
+
+        function startDetection() {
+            const interval = parseInt(document.getElementById('interval').value);
+            detectionInterval = setInterval(captureAndDetect, interval);
+        }
+
+        function stopDetection() {
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            webcam.srcObject = null;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            document.getElementById('status').textContent = 'Stopped';
+            document.getElementById('status').style.color = '#f44336';
+            alertBox.className = 'alert-box';
+            alertBox.style.display = 'none';
+        }
+
+        async function captureAndDetect() {
+            // Capture frame from video (reduced resolution for speed)
+            const tempCanvas = document.createElement('canvas');
+            // Reduce resolution by 50% for faster transmission (still accurate)
+            const targetWidth = Math.floor(webcam.videoWidth * 0.5);
+            const targetHeight = Math.floor(webcam.videoHeight * 0.5);
+            tempCanvas.width = targetWidth;
+            tempCanvas.height = targetHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(webcam, 0, 0, targetWidth, targetHeight);
+
+            // Convert to base64 with lower quality (60% instead of 80%)
+            const imageData = tempCanvas.toDataURL('image/jpeg', 0.6).split(',')[1];
+
+            // Send to API
+            try {
+                // Get notification preferences
+                const emailEnabled = document.getElementById('emailEnabled').checked;
+                const smsEnabled = document.getElementById('smsEnabled').checked;
+                const emailAddress = document.getElementById('emailAddress').value;
+                const phoneNumber = document.getElementById('phoneNumber').value;
+                
+                const response = await fetch('/roboflow/detect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: imageData,
+                        model_id: 'fire-and-smoke-0izsi/2',
+                        confidence: document.getElementById('confidence').value,
+                        is_webcam: true,
+                        notification_email: emailEnabled ? emailAddress : null,
+                        notification_phone: smsEnabled ? phoneNumber : null
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Update stats
+                stats.framesAnalyzed++;
+                document.getElementById('framesAnalyzed').textContent = stats.framesAnalyzed;
+
+                // ALWAYS clear canvas to remove old bounding boxes
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Skip API errors for alert state, but canvas is already cleared
+                if (data.error) {
+                    console.log('API error, keeping previous alert state');
+                    return;
+                }
+                
+                // Update based on real detection results
+                if (data.predictions && data.predictions.length > 0) {
+                    drawBoundingBoxes(data.predictions);
+                    updateAlert(data.predictions);
+                } else {
+                    // No fire detected - show clear
+                    showClearAlert();
+                }
+
+            } catch (error) {
+                console.error('Detection error:', error);
+            }
+        }
+
+        function drawBoundingBoxes(predictions) {
+            const scaleX = canvas.width / webcam.videoWidth;
+            const scaleY = canvas.height / webcam.videoHeight;
+            
+            // We sent 50% resolution image to API, so coordinates need 2x scaling
+            const apiScale = 2.0;
+
+            predictions.forEach(pred => {
+                const x = ((pred.x - pred.width / 2) * apiScale) * scaleX;
+                const y = ((pred.y - pred.height / 2) * apiScale) * scaleY;
+                const width = (pred.width * apiScale) * scaleX;
+                const height = (pred.height * apiScale) * scaleY;
+                const confidence = (pred.confidence * 100).toFixed(1);
+                const label = pred.class.toUpperCase();
+                const color = pred.class.toLowerCase() === 'fire' ? '#ff4444' : '#888888';
+
+                // Draw box
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 4;
+                ctx.strokeRect(x, y, width, height);
+
+                // Draw label
+                const labelText = `${label} ${confidence}%`;
+                ctx.font = 'bold 20px Arial';
+                const textWidth = ctx.measureText(labelText).width;
+                const labelY = Math.max(25, y);
+
+                ctx.fillStyle = color;
+                ctx.fillRect(x, labelY - 25, textWidth + 10, 30);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(labelText, x + 5, labelY - 5);
+            });
+        }
+
+        function updateAlert(predictions) {
+            const hasFire = predictions.some(p => p.class.toLowerCase() === 'fire');
+            const hasSmoke = predictions.some(p => p.class.toLowerCase() === 'smoke');
+            const maxConf = Math.max(...predictions.map(p => p.confidence * 100));
+
+            // Confirmation system: increment counters for consecutive detections
+            if (hasFire) {
+                fireConfirmCount = Math.min(fireConfirmCount + 1, CONFIRM_THRESHOLD); // Cap at threshold
+                smokeConfirmCount = 0; // Reset smoke counter
+            } else if (hasSmoke) {
+                smokeConfirmCount = Math.min(smokeConfirmCount + 1, CONFIRM_THRESHOLD); // Cap at threshold
+                fireConfirmCount = 0; // Reset fire counter
+            } else {
+                // No detection - reset both counters
+                fireConfirmCount = 0;
+                smokeConfirmCount = 0;
+            }
+
+            // Only show alert after CONFIRM_THRESHOLD consecutive detections
+            if (fireConfirmCount >= CONFIRM_THRESHOLD) {
+                stats.fireCount++;
+                document.getElementById('fireCount').textContent = stats.fireCount;
+                alertBox.className = 'alert-box fire';
+                alertBox.innerHTML = `
+                    <h2>🔥 FIRE DETECTED!</h2>
+                    <p style="font-size: 1.2em; margin-top: 10px;">Confidence: ${maxConf.toFixed(1)}%</p>
+                    <p style="margin-top: 10px;">⚠️ Take immediate action!</p>
+                    <p style="font-size: 0.9em; color: #ff8888; margin-top: 5px;">✓ Confirmed detection</p>
+                `;
+                document.getElementById('lastDetection').textContent = 'Fire - ' + new Date().toLocaleTimeString();
+                
+                // Show/update persistent notification (only alert sound on first detection)
+                if (!alertActive || lastAlertType !== 'fire') {
+                    showPushNotification(
+                        '🔥 FIRE DETECTED!',
+                        `Confidence: ${maxConf.toFixed(1)}% - Confirmed detection!`,
+                        '🔥',
+                        'fire'
+                    );
+                    alertActive = true;
+                    lastAlertType = 'fire';
+                }
+            } else if (smokeConfirmCount >= CONFIRM_THRESHOLD) {
+                stats.smokeCount++;
+                document.getElementById('smokeCount').textContent = stats.smokeCount;
+                alertBox.className = 'alert-box smoke';
+                alertBox.innerHTML = `
+                    <h2>💨 SMOKE DETECTED!</h2>
+                    <p style="font-size: 1.2em; margin-top: 10px;">Confidence: ${maxConf.toFixed(1)}%</p>
+                    <p style="margin-top: 10px;">⚠️ Investigate immediately!</p>
+                    <p style="font-size: 0.9em; color: #aaa; margin-top: 5px;">✓ Confirmed detection</p>
+                `;
+                document.getElementById('lastDetection').textContent = 'Smoke - ' + new Date().toLocaleTimeString();
+                
+                // Show/update persistent notification (only alert sound on first detection)
+                if (!alertActive || lastAlertType !== 'smoke') {
+                    showPushNotification(
+                        '💨 SMOKE DETECTED!',
+                        `Confidence: ${maxConf.toFixed(1)}% - Confirmed detection!`,
+                        '💨',
+                        'smoke'
+                    );
+                    alertActive = true;
+                    lastAlertType = 'smoke';
+                }
+            } else if (fireConfirmCount > 0 || smokeConfirmCount > 0) {
+                // Show "Detecting..." status while confirming
+                alertBox.className = 'alert-box';
+                alertBox.style.background = '#fff3cd';
+                alertBox.style.border = '2px solid #ffc107';
+                alertBox.innerHTML = `
+                    <h2>🔍 Detecting...</h2>
+                    <p style="margin-top: 10px;">Confirming detection: ${fireConfirmCount > 0 ? `Fire (${fireConfirmCount}/${CONFIRM_THRESHOLD})` : `Smoke (${smokeConfirmCount}/${CONFIRM_THRESHOLD})`}</p>
+                `;
+            }
+        }
+
+        function showClearAlert() {
+            alertBox.className = 'alert-box clear';
+            alertBox.innerHTML = `
+                <h2>✅ All Clear</h2>
+                <p style="margin-top: 10px;">No fire or smoke detected</p>
+            `;
+            
+            // Send "All Clear" notification if alert was previously active
+            if (alertActive) {
+                showPushNotification(
+                    '✅ All Clear',
+                    'No fire or smoke detected. Situation resolved.',
+                    '✅',
+                    'clear'
+                );
+                alertActive = false;
+                lastAlertType = null;
+            }
+        }
+    </script>
+</body>
+</html>

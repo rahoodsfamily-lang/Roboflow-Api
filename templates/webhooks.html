@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Management - Fire & Smoke Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .nav-links {
+            margin-top: 20px;
+        }
+
+        .nav-links a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: 600;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .api-key-section {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ffc107;
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin: 10px 0;
+        }
+
+        .content-section {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ff4444;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .webhook-card {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .webhook-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .webhook-card.active {
+            border-color: #4CAF50;
+            background: #f1f8f4;
+        }
+
+        .webhook-card.inactive {
+            border-color: #ff4444;
+            background: #fff5f5;
+            opacity: 0.7;
+        }
+
+        .webhook-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .webhook-url {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .badge-active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .badge-inactive {
+            background: #ff4444;
+            color: white;
+        }
+
+        .badge-fire {
+            background: #ff4444;
+            color: white;
+        }
+
+        .badge-smoke {
+            background: #888;
+            color: white;
+        }
+
+        .badge-all {
+            background: #667eea;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .success-message, .error-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .info-box h4 {
+            margin-bottom: 10px;
+            color: #1976D2;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Webhook Management</h1>
+            <p>Configure real-time alerts for fire and smoke detection</p>
+            <div class="nav-links">
+                <a href="/">🏠 Home</a>
+                <a href="/dashboard">📊 Dashboard</a>
+                <a href="/batch">📸 Batch</a>
+                <a href="/video">🎬 Video</a>
+                <a href="/webhooks">🔔 Webhooks</a>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="api-key-section">
+                <h3>🔑 API Key Required</h3>
+                <p>Enter your API key to manage webhooks:</p>
+                <input type="password" id="apiKeyInput" class="api-key-input" placeholder="Enter your API key (fsd_...)">
+                <button class="btn btn-primary" onclick="loadWebhooks()">Load Webhooks</button>
+            </div>
+
+            <div id="successMessage" class="success-message"></div>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+
+        <div id="webhooksContent" style="display: none;">
+            <div class="content-section">
+                <h2>➕ Create New Webhook</h2>
+                
+                <div class="form-group">
+                    <label for="webhookUrl">Webhook URL *</label>
+                    <input type="url" id="webhookUrl" placeholder="https://your-server.com/webhook" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventType">Event Type *</label>
+                    <select id="eventType">
+                        <option value="all">All Detections</option>
+                        <option value="fire_detected">Fire Detected Only</option>
+                        <option value="smoke_detected">Smoke Detected Only</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-success" onclick="createWebhook()">
+                    ➕ Create Webhook
+                </button>
+
+                <div class="info-box">
+                    <h4>📝 Webhook Payload Example</h4>
+                    <p>Your webhook will receive POST requests with this JSON payload:</p>
+                    <div class="code-block">
+{
+  "timestamp": "2025-11-04 00:36:33",
+  "location": "Building A",
+  "has_fire": true,
+  "has_smoke": false,
+  "max_confidence": 87.4,
+  "detection_count": 2,
+  "predictions": [
+    {
+      "class": "fire",
+      "confidence": 87.4,
+      "x": 320.5,
+      "y": 240.3
+    }
+  ]
+}
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <h2>📋 Your Webhooks</h2>
+                <div id="webhooksList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔔</div>
+                        <h3>No webhooks configured</h3>
+                        <p>Create your first webhook above to start receiving alerts</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <h2>💡 How Webhooks Work</h2>
+                <p><strong>Webhooks</strong> allow you to receive real-time notifications when fire or smoke is detected.</p>
+                
+                <h3 style="margin-top: 20px;">Setup Steps:</h3>
+                <ol style="margin-left: 20px; line-height: 2;">
+                    <li>Create a webhook endpoint on your server that accepts POST requests</li>
+                    <li>Add the webhook URL above</li>
+                    <li>Choose which events trigger the webhook (fire, smoke, or both)</li>
+                    <li>Your endpoint will receive JSON data whenever a detection occurs</li>
+                </ol>
+
+                <h3 style="margin-top: 20px;">Popular Webhook Services:</h3>
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li><strong>webhook.site</strong> - Test webhooks instantly</li>
+                    <li><strong>Zapier</strong> - Connect to 5000+ apps</li>
+                    <li><strong>IFTTT</strong> - Automate actions</li>
+                    <li><strong>Discord</strong> - Send alerts to Discord channels</li>
+                    <li><strong>Slack</strong> - Post to Slack channels</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let apiKey = '';
+
+        function showSuccess(message) {
+            const el = document.getElementById('successMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+
+        function showError(message) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+
+        async function loadWebhooks() {
+            apiKey = document.getElementById('apiKeyInput').value.trim();
+            
+            if (!apiKey) {
+                showError('Please enter your API key');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/webhooks', {
+                    headers: {
+                        'X-API-Key': apiKey
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Invalid API key or unauthorized');
+                }
+
+                const data = await response.json();
+                
+                document.querySelector('.api-key-section').style.display = 'none';
+                document.getElementById('webhooksContent').style.display = 'block';
+                
+                displayWebhooks(data.webhooks);
+                showSuccess('Webhooks loaded successfully');
+            } catch (error) {
+                showError('Error loading webhooks: ' + error.message);
+            }
+        }
+
+        function displayWebhooks(webhooks) {
+            const list = document.getElementById('webhooksList');
+            
+            if (webhooks.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔔</div>
+                        <h3>No webhooks configured</h3>
+                        <p>Create your first webhook above to start receiving alerts</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = '';
+            
+            webhooks.forEach(webhook => {
+                const card = document.createElement('div');
+                card.className = `webhook-card ${webhook.is_active ? 'active' : 'inactive'}`;
+                
+                const statusBadge = webhook.is_active ? 
+                    '<span class="badge badge-active">Active</span>' :
+                    '<span class="badge badge-inactive">Inactive</span>';
+                
+                const eventBadge = webhook.event_type === 'fire_detected' ?
+                    '<span class="badge badge-fire">🔥 Fire Only</span>' :
+                    webhook.event_type === 'smoke_detected' ?
+                    '<span class="badge badge-smoke">💨 Smoke Only</span>' :
+                    '<span class="badge badge-all">All Events</span>';
+                
+                card.innerHTML = `
+                    <div class="webhook-header">
+                        <div>
+                            ${statusBadge}
+                            ${eventBadge}
+                        </div>
+                        <button class="btn btn-danger" onclick="deleteWebhook(${webhook.id})">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                    <div class="webhook-url">${webhook.url}</div>
+                    <p><strong>Created:</strong> ${new Date(webhook.created_at).toLocaleString()}</p>
+                    ${webhook.last_triggered ? 
+                        `<p><strong>Last Triggered:</strong> ${new Date(webhook.last_triggered).toLocaleString()}</p>` : 
+                        '<p><strong>Last Triggered:</strong> Never</p>'}
+                    <p><strong>Trigger Count:</strong> ${webhook.trigger_count || 0}</p>
+                `;
+                
+                list.appendChild(card);
+            });
+        }
+
+        async function createWebhook() {
+            const url = document.getElementById('webhookUrl').value.trim();
+            const eventType = document.getElementById('eventType').value;
+
+            if (!url) {
+                showError('Please enter a webhook URL');
+                return;
+            }
+
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                showError('Webhook URL must start with http:// or https://');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/webhooks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        event_type: eventType
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create webhook');
+                }
+
+                const data = await response.json();
+                
+                showSuccess('Webhook created successfully!');
+                
+                // Clear form
+                document.getElementById('webhookUrl').value = '';
+                document.getElementById('eventType').value = 'all';
+                
+                // Reload webhooks
+                loadWebhooks();
+            } catch (error) {
+                showError('Error creating webhook: ' + error.message);
+            }
+        }
+
+        async function deleteWebhook(id) {
+            if (!confirm('Are you sure you want to delete this webhook?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/webhooks/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-API-Key': apiKey
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete webhook');
+                }
+
+                showSuccess('Webhook deleted successfully');
+                loadWebhooks();
+            } catch (error) {
+                showError('Error deleting webhook: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
